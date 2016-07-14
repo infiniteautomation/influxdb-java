@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
@@ -13,8 +11,8 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import org.influxdb.impl.PointImpl;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -121,15 +119,16 @@ public class InfluxDBTest {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 
-		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy("default").build();
-		Point point1 = Point
+		BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy("default").build();
+		Point point1 = PointImpl
 				.measurement("cpu")
+				.tag("async", "true")
 				.tag("atag", "test")
 				.addField("idle", 90L)
 				.addField("usertime", 9L)
 				.addField("system", 1L)
 				.build();
-		Point point2 = Point.measurement("disk").tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+		Point point2 = PointImpl.measurement("disk").tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
 		batchPoints.point(point1);
 		batchPoints.point(point2);
 		this.influxDB.write(batchPoints);
@@ -209,17 +208,4 @@ public class InfluxDBTest {
 		this.influxDB.deleteDatabase(numericDbName);
 	}
 
-	/**
-	 * Test the implementation of {@link InfluxDB#isBatchEnabled()}.
-	 */
-	@Test(enabled = true)
-	public void testIsBatchEnabled() {
-		Assert.assertFalse(this.influxDB.isBatchEnabled());
-
-		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
-		Assert.assertTrue(this.influxDB.isBatchEnabled());
-
-		this.influxDB.disableBatch();
-		Assert.assertFalse(this.influxDB.isBatchEnabled());
-	}
 }

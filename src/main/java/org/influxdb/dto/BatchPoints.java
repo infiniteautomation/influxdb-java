@@ -1,8 +1,11 @@
 package org.influxdb.dto;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
 import org.influxdb.InfluxDB.ConsistencyLevel;
 
 import com.google.common.base.Preconditions;
@@ -10,6 +13,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+
+import retrofit.mime.TypedOutput;
 
 /**
  * {Purpose of This Type}
@@ -19,10 +24,13 @@ import com.google.common.collect.Ordering;
  * @author stefan
  *
  */
-public class BatchPoints {
+public class BatchPoints implements TypedOutput {
+	
+	private static final String MIME_TYPE = "text/plain; charset=UTF-8";
+	private final byte[] NEWLINE = "\n".getBytes();
+	
 	private String database;
 	private String retentionPolicy;
-	private Map<String, String> tags;
 	private List<Point> points;
 	private ConsistencyLevel consistency;
 
@@ -125,12 +133,8 @@ public class BatchPoints {
 			Preconditions.checkArgument(!Strings.isNullOrEmpty(this.database), "Database must not be null or empty.");
 			BatchPoints batchPoints = new BatchPoints();
 			batchPoints.setDatabase(this.database);
-			for (Point point : this.points) {
-				point.getTags().putAll(this.tags);
-			}
 			batchPoints.setPoints(this.points);
 			batchPoints.setRetentionPolicy(this.retentionPolicy);
-			batchPoints.setTags(this.tags);
 			if (null == this.consistency) {
 				this.consistency = ConsistencyLevel.ONE;
 			}
@@ -191,24 +195,8 @@ public class BatchPoints {
 	 * @return this Instance to be able to daisy chain calls.
 	 */
 	public BatchPoints point(final Point point) {
-		point.getTags().putAll(this.tags);
 		this.points.add(point);
 		return this;
-	}
-
-	/**
-	 * @return the tags
-	 */
-	public Map<String, String> getTags() {
-		return this.tags;
-	}
-
-	/**
-	 * @param tags
-	 *            the tags to set
-	 */
-	void setTags(final Map<String, String> tags) {
-		this.tags = tags;
 	}
 
 	/**
@@ -237,7 +225,6 @@ public class BatchPoints {
 		builder.append(", retentionPolicy=");
 		builder.append(this.retentionPolicy);
 		builder.append(", tags=");
-		builder.append(this.tags);
 		builder.append(", points=");
 		builder.append(this.points);
 		builder.append("]");
@@ -256,5 +243,28 @@ public class BatchPoints {
 			sb.append(point.lineProtocol()).append("\n");
 		}
 		return sb.toString();
+	}
+	
+	@Override
+	public String fileName() {
+		return null;
+	}
+
+	@Override
+	public String mimeType() {
+		return MIME_TYPE;
+	}
+
+	@Override
+	public long length() {
+		return -1;
+	}
+
+	@Override
+	public void writeTo(OutputStream out) throws IOException {
+		for(Point p : points){
+			p.writeTo(out);
+			out.write(NEWLINE);
+		}
 	}
 }

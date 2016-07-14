@@ -1,12 +1,14 @@
 package org.influxdb.impl;
 
 import org.influxdb.dto.QueryResult;
+
 import retrofit.client.Response;
 import retrofit.http.Body;
 import retrofit.http.GET;
 import retrofit.http.Headers;
 import retrofit.http.POST;
 import retrofit.http.Query;
+import retrofit.mime.TypedOutput;
 import retrofit.mime.TypedString;
 
 interface InfluxDBService {
@@ -38,6 +40,12 @@ interface InfluxDBService {
 			@Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
 			@Query(CONSISTENCY) String consistency, @Body TypedString batchPoints);
 
+	@Headers("Content-Type: text/plain")
+	@POST("/write")
+	public Response writePointsBytes(@Query(U) String username, @Query(P) String password, @Query(DB) String database,
+			@Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
+			@Query(CONSISTENCY) String consistency, @Body TypedOutput batchPoints);
+	
 	@GET("/query")
 	public QueryResult query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
 			@Query(EPOCH) String epoch, @Query(Q) String query);

@@ -2,18 +2,16 @@ package org.influxdb.impl;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.common.base.Joiner;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.BatchProcessor.BatchEntry;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
@@ -35,12 +33,7 @@ public class InfluxDBImpl implements InfluxDB {
 	private final String password;
 	private final RestAdapter restAdapter;
 	private final InfluxDBService influxDBService;
-	private BatchProcessor batchProcessor;
-	private final AtomicBoolean batchEnabled = new AtomicBoolean(false);
-	private final AtomicLong writeCount = new AtomicLong();
-	private final AtomicLong unBatchedCount = new AtomicLong();
 	private final AtomicLong batchedCount = new AtomicLong();
-	private LogLevel logLevel = LogLevel.NONE;
 	
 	public InfluxDBImpl(final String url, final String username, final String password, 
 			final Client client) {
@@ -74,38 +67,7 @@ public class InfluxDBImpl implements InfluxDB {
 		default:
 			break;
 		}
-		this.logLevel = logLevel;
 		return this;
-	}
-
-	@Override
-	public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit) {
-		if (this.batchEnabled.get()) {
-			throw new IllegalArgumentException("BatchProcessing is already enabled.");
-		}
-		this.batchProcessor = BatchProcessor
-				.builder(this)
-				.actions(actions)
-				.interval(flushDuration, flushDurationTimeUnit)
-				.build();
-		this.batchEnabled.set(true);
-		return this;
-	}
-
-	@Override
-	public void disableBatch() {
-		this.batchEnabled.set(false);
-		this.batchProcessor.flush();
-		if (this.logLevel != LogLevel.NONE) {
-			System.out.println(
-					"total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get() + "batchPoints:"
-							+ this.batchedCount);
-		}
-	}
-	
-	@Override
-	public boolean isBatchEnabled() {
-		return this.batchEnabled.get();
 	}
 
 	@Override
@@ -132,30 +94,20 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void write(final String database, final String retentionPolicy, final Point point) {
-		if (this.batchEnabled.get()) {
-			BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
-			this.batchProcessor.put(batchEntry);
-		} else {
-			BatchPoints batchPoints = BatchPoints.database(database).retentionPolicy(retentionPolicy).build();
-			batchPoints.point(point);
-			this.write(batchPoints);
-			this.unBatchedCount.incrementAndGet();
-		}
-		this.writeCount.incrementAndGet();
+		throw new IllegalArgumentException("Single Point Writing is not supported.");
 	}
 
 	@Override
 	public void write(final BatchPoints batchPoints) {
 		this.batchedCount.addAndGet(batchPoints.getPoints().size());
-		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
-		this.influxDBService.writePoints(
+		this.influxDBService.writePointsBytes(
 				this.username,
 				this.password,
 				batchPoints.getDatabase(),
 				batchPoints.getRetentionPolicy(),
 				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
 				batchPoints.getConsistency().value(),
-				lineProtocol);
+				batchPoints);
 
 	}
 

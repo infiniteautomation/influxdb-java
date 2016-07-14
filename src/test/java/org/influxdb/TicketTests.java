@@ -2,14 +2,12 @@ package org.influxdb;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
-import org.testng.annotations.AfterClass;
+import org.influxdb.impl.PointImpl;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -65,7 +63,7 @@ public class TicketTests {
 	public void testTicket38() {
 		String dbName = "ticket38_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
-		Point point1 = Point
+		Point point1 = PointImpl
 				.measurement("metric")
 				.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
 				.addField("value", 5.0)
@@ -88,11 +86,11 @@ public class TicketTests {
 		this.influxDB.createDatabase(dbName);
 		BatchPoints batchPoints = BatchPoints
 				.database(dbName)
-				.tag("async", "true")
 				.retentionPolicy("default")
 				.consistency(InfluxDB.ConsistencyLevel.ALL)
 				.build();
-		Point.Builder builder = Point.measurement("my_type");
+		PointImpl.Builder builder = PointImpl.measurement("my_type");
+		builder.tag("async", "true");
 		builder.addField("my_field", "string_value");
 		Point point = builder.build();
 		batchPoints.point(point);
@@ -107,9 +105,8 @@ public class TicketTests {
 	public void testTicket40() {
 		String dbName = "ticket40_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
-		this.influxDB.enableBatch(100, 100, TimeUnit.MICROSECONDS);
 		for (int i = 0; i < 1000; i++) {
-			Point point = Point.measurement("cpu").addField("idle", 99.0).build();
+			Point point = PointImpl.measurement("cpu").addField("idle", 99.0).build();
 			this.influxDB.write(dbName, "default", point);
 		}
 		this.influxDB.deleteDatabase(dbName);

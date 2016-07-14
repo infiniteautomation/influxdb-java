@@ -1,10 +1,9 @@
 package org.influxdb;
 
-import java.util.concurrent.TimeUnit;
-
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
+import org.influxdb.impl.PointImpl;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -26,16 +25,14 @@ public class PerformanceTests {
 	public void writeSinglePointPerformance() throws InterruptedException {
 		String dbName = "write_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
-		this.influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
 		Stopwatch watch = Stopwatch.createStarted();
 		for (int j = 0; j < SINGLE_POINT_COUNT; j++) {
-			Point point = Point.measurement("cpu")
+			Point point = PointImpl.measurement("cpu")
 					.addField("idle", (double) j)
 					.addField("user", 2.0 * j)
 					.addField("system", 3.0 * j).build();
 			this.influxDB.write(dbName, "default", point);
 		}
-		this.influxDB.disableBatch();
 		System.out.println("Single Point Write for " + SINGLE_POINT_COUNT + " writes of  Points took:" + watch);
 		this.influxDB.deleteDatabase(dbName);
 	}
@@ -50,12 +47,13 @@ public class PerformanceTests {
 
 			BatchPoints batchPoints = BatchPoints
 					.database(dbName)
-					.tag("blubber", "bla")
+					
 					.retentionPolicy("default")
 					.build();
 			for (int j = 0; j < POINT_COUNT; j++) {
-				Point point = Point
+				Point point = PointImpl
 						.measurement("cpu")
+						.tag("blubber", "bla")
 						.addField("idle", (double) j)
 						.addField("user", 2.0 * j)
 						.addField("system", 3.0 * j)
@@ -73,11 +71,10 @@ public class PerformanceTests {
 	public void maxWritePointsPerformance() {
 		String dbName = "d";
 		this.influxDB.createDatabase(dbName);
-		this.influxDB.enableBatch(100000, 60, TimeUnit.SECONDS);
 
 		Stopwatch watch = Stopwatch.createStarted();
 		for (int i = 0; i < 2000000; i++) {
-			Point point = Point.measurement("s").addField("v", 1.0).build();
+			Point point = PointImpl.measurement("s").addField("v", 1.0).build();
 			this.influxDB.write(dbName, "default", point);
 		}
 		System.out.println("5Mio points:" + watch);

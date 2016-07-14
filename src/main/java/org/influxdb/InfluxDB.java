@@ -77,29 +77,6 @@ public interface InfluxDB {
 	public InfluxDB setLogLevel(final LogLevel logLevel);
 
 	/**
-	 * Enable Batching of single Point writes to speed up writes significant. If either actions or
-	 * flushDurations is reached first, a batchwrite is issued.
-	 *
-	 * @param actions
-	 *            the number of actions to collect
-	 * @param flushDuration
-	 *            the time to wait at most.
-	 * @param flushDurationTimeUnit
-	 * @return the InfluxDB instance to be able to use it in a fluent manner.
-	 */
-	public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
-
-	/**
-	 * Disable Batching.
-	 */
-	public void disableBatch();
-
-	/**
-	 * Returns whether Batching is enabled.
-	 */
-	public boolean isBatchEnabled();
-
-	/**
 	 * Ping this influxDB-
 	 * 
 	 * @return the response of the ping execution.
