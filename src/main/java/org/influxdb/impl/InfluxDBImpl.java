@@ -105,7 +105,7 @@ public class InfluxDBImpl implements InfluxDB {
 				this.password,
 				batchPoints.getDatabase(),
 				batchPoints.getRetentionPolicy(),
-				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+				TimeUtil.toTimePrecision(batchPoints.getPrecision()),
 				batchPoints.getConsistency().value(),
 				batchPoints);
 

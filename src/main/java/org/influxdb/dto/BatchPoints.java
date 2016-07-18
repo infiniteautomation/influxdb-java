@@ -6,6 +6,7 @@ import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDB.ConsistencyLevel;
 
@@ -34,6 +35,7 @@ public class BatchPoints implements TypedOutput {
 	private String retentionPolicy;
 	private List<Point> points;
 	private ConsistencyLevel consistency;
+	private TimeUnit precision;
 
 	BatchPoints() {
 		// Only visible in the Builder
@@ -59,6 +61,7 @@ public class BatchPoints implements TypedOutput {
 		private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
 		private final List<Point> points = Lists.newArrayList();
 		private ConsistencyLevel consistency;
+		private TimeUnit precision;
 
 		/**
 		 * @param database
@@ -78,6 +81,10 @@ public class BatchPoints implements TypedOutput {
 			return this;
 		}
 
+		public Builder precision(final TimeUnit precision){
+			this.precision = precision;
+			return this;
+		}
 		/**
 		 * Add a tag to this set of points.
 		 *
@@ -136,6 +143,11 @@ public class BatchPoints implements TypedOutput {
 			batchPoints.setDatabase(this.database);
 			batchPoints.setPoints(this.points);
 			batchPoints.setRetentionPolicy(this.retentionPolicy);
+			if(null == this.precision)
+				batchPoints.setPrecision(TimeUnit.NANOSECONDS);
+			else
+				batchPoints.setPrecision(this.precision);
+			
 			if (null == this.consistency) {
 				this.consistency = ConsistencyLevel.ONE;
 			}
@@ -214,6 +226,14 @@ public class BatchPoints implements TypedOutput {
 	void setConsistency(final ConsistencyLevel consistency) {
 		this.consistency = consistency;
 	}
+	
+	public TimeUnit getPrecision() {
+		return precision;
+	}
+
+	public void setPrecision(TimeUnit precision) {
+		this.precision = precision;
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -225,6 +245,8 @@ public class BatchPoints implements TypedOutput {
 		builder.append(this.database);
 		builder.append(", retentionPolicy=");
 		builder.append(this.retentionPolicy);
+		builder.append(", precision=");
+		builder.append(this.precision);
 		builder.append(", tags=");
 		builder.append(", points=");
 		builder.append(this.points);
