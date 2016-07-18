@@ -1,6 +1,7 @@
 package org.influxdb.dto;
 
-import retrofit.mime.TypedOutput;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 /**
  * Representation of a InfluxDB database Point.
@@ -8,7 +9,7 @@ import retrofit.mime.TypedOutput;
  * @author stefan.majer [at] gmail.com
  * 
  */
-public interface Point extends TypedOutput{
+public interface Point {
 	
 	/**
 	 * calculate the lineprotocol entry for a single Point.
@@ -20,5 +21,11 @@ public interface Point extends TypedOutput{
 	 * @return the String without newLine.
 	 */
 	public String lineProtocol();
+	
+	/**
+	 * For use in batching to write directly to the stream
+	 * @param sw
+	 */
+	public void writeTo(OutputStreamWriter sw) throws IOException;
 
 }

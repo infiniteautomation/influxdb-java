@@ -1,8 +1,7 @@
 package org.influxdb.impl;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
@@ -21,8 +20,6 @@ import com.google.common.escape.Escaper;
 import com.google.common.escape.Escapers;
 
 public class PointImpl implements Point {
-	
-	private static final String MIME_TYPE = "text/plain; charset=UTF-8";
 	
 	private String measurement;
 	private Map<String, String> tags;
@@ -356,24 +353,9 @@ public class PointImpl implements Point {
 		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
 		return sb;
 	}
-
+	
 	@Override
-	public String fileName() {
-		return null;
-	}
-
-	@Override
-	public String mimeType() {
-		return MIME_TYPE;
-	}
-
-	@Override
-	public long length() {
-		return -1;
-	}
-
-	@Override
-	public void writeTo(OutputStream out) throws IOException {
-		out.write(lineProtocol().getBytes("UTF-8"));
+	public void writeTo(OutputStreamWriter out) throws IOException {
+		out.write(lineProtocol());
 	}
 }

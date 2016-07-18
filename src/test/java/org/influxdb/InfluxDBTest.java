@@ -3,7 +3,6 @@ package org.influxdb;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;

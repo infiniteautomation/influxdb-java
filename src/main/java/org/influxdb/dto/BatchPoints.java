@@ -2,6 +2,7 @@ package org.influxdb.dto;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ import retrofit.mime.TypedOutput;
 public class BatchPoints implements TypedOutput {
 	
 	private static final String MIME_TYPE = "text/plain; charset=UTF-8";
-	private final byte[] NEWLINE = "\n".getBytes();
+	private static final String NEWLINE = "\n";
 	
 	private String database;
 	private String retentionPolicy;
@@ -260,11 +261,15 @@ public class BatchPoints implements TypedOutput {
 		return -1;
 	}
 
+	private final String UTF8 = "UTF-8";
+	
 	@Override
 	public void writeTo(OutputStream out) throws IOException {
+		OutputStreamWriter sw = new OutputStreamWriter(out, UTF8);
 		for(Point p : points){
-			p.writeTo(out);
-			out.write(NEWLINE);
+			p.writeTo(sw);
+			sw.write(NEWLINE);
 		}
+		sw.flush();
 	}
 }
